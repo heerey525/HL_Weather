@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>天气APP</title>
+    <meta name="viewport"
+          content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+    <!-- 缩放比例设置 -->
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="js/rem.js"></script>
+    <link rel="icon" type="image/icon" href="img/logo.ico">
+</head>
+<body>
+<div class="page1">
+    <!-- 当前信息 -->
+    <section id="now">
+        <!-- 当前城市 -->
+        <h1 class="now_city">
+            <span class="address">当前地址</span>
+            <span class="now_city_name" style="font-size: 20px;"></span>
+            <div class="rrr">搜索</div>
+        </h1>
+        <!-- 当前空气质量 -->
+        <div class="now_air">
+            <p style="margin-bottom: .2rem;">空气</p>
+            <span></span>
+        </div>
+        <!-- 当前温度 -->
+        <h2 class="now_temp">
+            <span></span>°
+        </h2>
+        <!-- 当前天气 -->
+        <h3 class="now_weather">
+            <div style=""><img src="" alt="" style="width: 2rem;height: 2rem;margin:auto;"></div>
+            <span></span>
+        </h3>
+        <!-- 当前风向和等级 -->
+        <div class="now_wind">
+            <span id="nowwind"></span>
+            <span id="nowwindji"></span>级
+        </div>
+        <h2 class="now_prompt">
+            <div>舒适度指数：<span></span></div>
+            <p>关注天气变化，注意身体健康~</p>
+        </h2>
+    </section>
+    <!-- 未来两天的信息 -->
+    <section id="towdays">
+        <div class="towdays_hezi today">
+            <div class="towday_top">
+                <span class="towdays_date">今天</span>
+                <p>
+                    <span class="today_hightemp"></span>/
+                    <span class="today_lowtemp"></span>°C
+                </p>
+            </div>
+            <div class="towday_top">
+                <span class="towdays_date towdays_date2"></span>
+                <span class="towdays_img" id="day_img"><img src="" alt=""></span>
+            </div>
+        </div>
+        <div class="towdays_hezi tomorrow">
+            <div class="towday_top">
+                <span class="towdays_date">明天</span>
+                <p>
+                    <span class="today_hightemp tomorrow_hightemp"></span>/
+                    <span class="today_lowtemp tomorrow_lowtemp"></span>°C
+                </p>
+            </div>
+            <div class="towday_top">
+                <span class="towdays_date towdays_date1"></span>
+                <span class="towdays_img " id="towday_img"><img src="" alt=""></span>
+            </div>
+        </div>
+    </section>
+    <!-- 未来24小时的信息 -->
+    <ul id="hours">
+        <!-- 未来一周的信息 -->
+    </ul>
+    <ul id="week">
+
+    </ul>
+    <!-- 选择城市开始 -->
+</div>
+<mian id="citys">
+    <header>
+        <div style="position:relative;">
+            <input type="text" placeholder="请输入搜索内容" class="search" style="padding: 0 .9rem 0  .3rem;">
+            <i id="iconSearch" style="position:absolute;font-size: .4rem;bottom:.5rem;right:0;">go-></i>
+        </div>
+        <h2 class="btn">取消</h2>
+    </header>
+    <div class="citys_bottoms">
+        <div><h1>城市</h1></div>
+        <ul class="citys_back">
+        </ul>
+    </div>
+
+</mian>
+<!-- 选择城市结束 -->
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/citys.js"></script>
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=your_key"></script>
+<script>
+    var myCity = new BMap.LocalCity();
+    myCity.get(myFun);
+
+    function myFun(result) {
+        var city = result.name;
+        // console.log(result)
+        $(".now_city .now_city_name").text(city);
+        getweather(city)
+    }
+
+    function getweather(city) {
+        $(".now_city .now_city_name").text(city);
+        //实况天气
+        $.getJSON("https://free-api.heweather.com/s6/weather/now?key=your_key&location=" + city, function (r) {
+            if (r.HeWeather6[0].status != "ok") {
+                // alert("请求失败！")
+                return false;
+            }
+            let now = r.HeWeather6[0].now;
+            $(".now_weather img").attr("src", "img/cond-icon/" + now.cond_code + ".png");
+            $(".now_temp span").html(now.tmp);
+            $(".now_weather span").html(now.cond_txt);
+            $("#nowwind").html(now.wind_dir);
+            $("#nowwindji").html(now.wind_sc);
+        })
+        //当天生活质量
+        $.getJSON("https://free-api.heweather.com/s6/weather/lifestyle?key=your_key&location="+city,function (r) {
+            // console.log(r)
+            if (r.HeWeather6[0].status != "ok") {
+                // alert("请求失败！")
+                return false;
+            }
+            let quality = r.HeWeather6[0].lifestyle;
+            $(".now_prompt div span").html(quality[0].brf)
+            $(".now_prompt p").html(quality[0].txt)
+        })
+        //空气质量实况
+        $.getJSON("https://free-api.heweather.com/s6/air/now?key=your_key&location="+city,function (r) {
+            console.log(r)
+            if (r.HeWeather6[0].status != "ok") {
+                // alert("请求失败！")
+                return false;
+            }
+            let air_now=r.HeWeather6[0].air_now_city;
+            $(".now_air span").html(air_now.qlty)
+
+        })
+
+        //一周内预报
+        $.getJSON("https://free-api.heweather.com/s6/weather/forecast?key=your_key&location=" + city, function (r) {
+            if (r.HeWeather6[0].status != "ok") {
+                // alert("请求失败")
+                return false;
+            }
+            let week = r.HeWeather6[0].daily_forecast;
+            let week_today = week[0];
+            let week_tow = week[1]
+            //今天、明天部分气象
+            $(".today .today_hightemp").text(week_today.tmp_max)
+            $(".today .today_lowtemp").text(week_today.tmp_min)
+            $(".towdays_date2").text(week_today.cond_txt_d)
+            $("#day_img img").attr("src", "img/cond-icon/" + week_today.cond_code_d + ".png")
+
+            $(".tomorrow .tomorrow_hightemp").text(week_tow.tmp_max)
+            $(".tomorrow .tomorrow_lowtemp").text(week_tow.tmp_min)
+            $(".towdays_date1").text(week_tow.cond_txt_d)
+            $("#towday_img img").attr("src", "img/cond-icon/" + week_tow.cond_code_d + ".png")
+
+            //底部一周天气
+            var str1 = "";
+            $.each(week, function (index, val) {
+                str1 += `<li>
+				<h2 class="yixingqi_riqi"><span>${val.date}</span></h2>
+				<h2 class="yixingqi_tianqi"><span>${val.cond_txt_d}</span></h2>
+				<div class="yixingqi_img">
+					<img src="img/cond-icon/${val.cond_code_d}.png" alt="">
+				</div>
+				<div>
+					<h2 class="yixingqi_zuigao"><span>${val.tmp_max}</span></h2>
+				</div>
+				<div>
+					<h2 class="yixingqi_zuidi"><span>${val.tmp_min}</span></h2>
+				</div>
+				<h2 class="yixingqi_fengxiang"><span>${val.wind_dir}</span></h2>
+				<div>
+					<h2 class="yixingqi_fengji"><span>${val.wind_sc}</span></h2>
+				</div>
+			</li>`;
+                $("#week").html(str1);
+            })
+        })
+        $.getJSON("https://free-api.heweather.com/s6/weather/hourly?key=your_key&location=" + city, function (r) {
+            if (r.HeWeather6[0].status != "ok") {
+                // alert("请求失败")
+                return false;
+            }
+            var str = "";
+            $.each(r.HeWeather6[0].hourly,function(index,val){
+                var aaa=val.time;
+                aaa=aaa.substring(11)
+                str += `<li>
+				<h1 class="hours_times">${aaa}</h1>
+				<div class="hours_img">
+					<img src="img/cond-icon/${val.cond_code}.png" alt="">
+				</div>
+				<h2 class="hours_wendu"><span>${val.tmp}</span>°</h2><br>
+            </li>`
+                $("#hours").html(str)
+            })
+        })
+    }
+
+    function getcity() {
+        var data = [];
+        var province = [];
+        let str = "";
+        $.each(provinces, function (index, item) {
+            str += `<li id="${item.code}"><div>${item.name}</div></li>`
+            $(".citys_back").html(str);
+        })
+        var temp=[];
+        $(".citys_back").off("click", "li").on("click", "li", function () {
+            var id = $(this).attr("id");
+            temp=[]
+            for(var p in cities){//遍历json对象的每个key/value对,p为key
+                temp=cities[p=id]
+            }
+            //你要使用的地方
+            $(".citys_back").empty();
+            // console.log(city)
+            let str="";
+            $.each(temp,function (index,val) {
+                str+=`<li class="city_lable" id="${val.code}"><div>${val.name}</div></li>`
+            })
+            $(".citys_back").html(str);
+            $(".citys_back").off("click", "li");
+            return false
+        })
+        var temp1=[];
+        $(".citys_back").off("click", ".city_lable").on("click", ".city_lable", function () {
+            var id = $(this).attr("id");
+            temp1=[]
+            for(var p in districts){//遍历json对象的每个key/value对,p为key
+                temp=districts[p=id]
+            }
+            //你要使用的地方
+            $(".citys_back").empty();
+            // console.log(id)
+            // console.log(temp)
+            let str="";
+            $.each(temp,function (index,val) {
+                str+=`<li id="${val.code}"><div class="city">${val.name}</div></li>`
+            })
+            $(".citys_back").html(str);
+            $(".citys_back").off("click", "li");
+            return false
+        })
+
+        $(".citys_back").on("click", ".city", function () {
+            $("#citys").hide();
+            $(".page1").show();
+            getweather($(this).html())
+        })
+
+        $('.search').keydown(function (event) {
+            if (event.keyCode == 13) {
+                $("#iconSearch").trigger("click")
+            }
+        });
+        $("#iconSearch").click(function () {
+            var citySearch = $(".search").val();
+            if (citySearch == "") {
+                // alert("请先输入城市名")
+                return false
+            }
+            $.getJSON("https://search.heweather.com/find?key=your_key&location=" + citySearch, function (r) {
+                //如果返回值不是ok，不执行下面
+                if (r.HeWeather6[0].status != "ok") {
+                    // alert("不是合法城市名")
+                    return false;
+                }
+                // console.log(r)
+                data = r.HeWeather6[0].basic;
+                // console.log(data)
+                let str = "";
+                $.each(data, function (index, val) {
+                    str += `<li id="${val.cid}"><div class="city">${val.location}</div></li>`
+                });
+                $(".citys_back").html(str);
+            })
+        })
+    }
+
+    getcity();
+
+    //点击右上角（搜索与取消）页面转化
+    $(".rrr").click(function () {
+        getcity();
+        $(".page1").hide();
+        $("#citys").show();
+    })
+    $(".btn").click(function () {
+        $("#citys").hide();
+        $(".page1").show();
+    })
+
+</script>
+</body>
+</html>
